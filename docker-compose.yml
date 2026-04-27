@@ -1,0 +1,53 @@
+services:
+  # ----------------------------------------
+  # Service 1: API Golang
+  # ----------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: DockerFile
+    container_name: go_api_server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres_db # Menunjuk ke nama service database di bawah
+      - DB_USER=postgres
+      - DB_PASSWORD=secretpassword
+      - DB_NAME=master_db
+      - DB_PORT=5432
+      - JWT_SECRET=my_super_secret_key
+      - PORT=8080
+    depends_on:
+      - postgres_db # Pastikan DB menyala lebih dulu sebelum API
+    networks:
+      - app-network
+
+  # ----------------------------------------
+  # Service 2: Database PostgreSQL
+  # ----------------------------------------
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: go_postgres_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secretpassword
+      - POSTGRES_DB=master_db
+      - TZ=Asia/Jakarta
+    ports:
+      - "5432:5432" # Agar Anda tetap bisa akses DB lewat DBeaver/pgAdmin dari luar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+# ----------------------------------------
+# Konfigurasi Network & Volume
+# ----------------------------------------
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pgdata: # Menyimpan data DB secara permanen agar tidak hilang saat container mati
